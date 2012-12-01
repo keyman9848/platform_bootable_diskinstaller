@@ -220,6 +220,7 @@ $(INSTALLED_ANDROID_IMAGE_SYSTEM_TARGET): \
 
 $(INSTALLED_ANDROID_IMAGE_DATA_TARGET): \
 					$(INSTALLED_USERDATAIMAGE_TARGET) \
+					$(INSTALLED_CACHEIMAGE_TARGET) \
 					$(grub_bin) \
 					$(edit_mbr) \
 					$(android_data_layout)
@@ -257,7 +258,6 @@ $(INSTALLED_VBOX_SYSTEM_DISK_IMAGE_TARGET): $(INSTALLED_ANDROID_IMAGE_SYSTEM_TAR
 	@rm -f $@
 	$(hide) $(virtual_box_manager) \
 		$(virtual_box_manager_options) \
-		$(virtual_box_manager_system_disk_ptions) \
 		$^ $@
 	@echo "Done with VirtualBox bootable system-disk image -[ $@ ]-"
 
@@ -266,7 +266,6 @@ $(INSTALLED_VBOX_DATA_DISK_IMAGE_TARGET): $(INSTALLED_ANDROID_IMAGE_DATA_TARGET)
 	@rm -f $@
 	$(hide) $(virtual_box_manager) \
 		$(virtual_box_manager_options) \
-		$(virtual_box_manager_data_disk_ptions) \
 		$^ $@
 	@echo "Done with VirtualBox bootable data-disk image -[ $@ ]-"
 

@@ -153,11 +153,13 @@ parse_args(int argc, char *argv[], struct disk_info **dinfo, int *test,
             return 1;
         }
 
-        pinfo->len_kb = (uint32_t) ((tmp_stat.st_size + 1023) >> 10);
-        if (update_lba)
-            (*dinfo)->num_lba += 
-                    ((uint64_t)pinfo->len_kb * 1024) / (*dinfo)->sect_size;
-        printf("Updated %s length to be %uKB\n", pinfo->name, pinfo->len_kb);
+        if (!pinfo->len_kb) {
+            pinfo->len_kb = (uint32_t) ((tmp_stat.st_size + 1023) >> 10);
+            if (update_lba)
+                (*dinfo)->num_lba += 
+                        ((uint64_t)pinfo->len_kb * 1024) / (*dinfo)->sect_size;
+            printf("Updated %s length to be %uKB\n", pinfo->name, pinfo->len_kb);
+        }
     }
 
     return 0;
