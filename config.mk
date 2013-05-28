@@ -255,7 +255,7 @@ $(INSTALLED_ANDROID_IMAGE_SYSTEM_W_GAPPS_TARGET): \
 	@echo "Copying gapps application to system image"
 	$(foreach _d,$(gapps_archive_directories), \
 		e2mkdir $(INSTALLED_SYSTEMIMAGE_GAPPS):$(_d); \
-		e2cp -v -p $(gapps_out)/system/$(_d)/* $(INSTALLED_SYSTEMIMAGE_GAPPS):$(_d); \
+		e2cp -v $(gapps_out)/system/$(_d)/* $(INSTALLED_SYSTEMIMAGE_GAPPS):$(_d); \
 	)
 	@rm -rf $(gapps_out)
 
