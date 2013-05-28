@@ -249,7 +249,7 @@ $(INSTALLED_ANDROID_IMAGE_SYSTEM_W_GAPPS_TARGET): \
 
 	@echo "Inflatting gapps archive: $(gapps_archive_file)"
 	@rm -rf $(gapps_out)
-	@mkdir $(gapps_out)
+	@mkdir -p $(gapps_out)
 	@tar xvz -C $(gapps_out) -f $(gapps_archive_file)
 
 	@echo "Copying gapps application to system image"
