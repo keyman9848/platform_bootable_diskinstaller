@@ -4,7 +4,7 @@ ifeq ($(TARGET_USE_DISKINSTALLER),true)
 
 diskinstaller_root := bootable/diskinstaller
 
-gapps_archive_file := /srv/buildbot/bin/gapps/addon-20121117.tgz
+gapps_archive_file := $(GAPPS_ARCHIVE_FILE)
 gapps_out := $(PRODUCT_OUT)/gapps
 gapps_archive_directories := \
 	lib \
