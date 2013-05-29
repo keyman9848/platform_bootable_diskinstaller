@@ -6,21 +6,7 @@ diskinstaller_root := bootable/diskinstaller
 
 gapps_archive_file := $(GAPPS_ARCHIVE_FILE)
 gapps_out := $(PRODUCT_OUT)/gapps
-gapps_archive_directories := \
-	lib \
-	lib/arm \
-	lib/plugins \
-	lib/plugins/com.adobe.flashplayer \
-	framework \
-	etc \
-	etc/permissions \
-	tts \
-	tts/lang_pico \
-	app \
-	usr \
-	usr/srec \
-	usr/srec/en-US
-
+gapps_directories_list = find $(gapps_out) -mindepth 1 -type d | sed -e 's/^.*\/gapps\/system\///g'
 
 android_sysbase_modules := \
 	libc \
@@ -253,10 +239,10 @@ $(INSTALLED_ANDROID_IMAGE_SYSTEM_W_GAPPS_TARGET): \
 	@tar xvz -C $(gapps_out) -f $(gapps_archive_file)
 
 	@echo "Copying gapps application to system image"
-	$(foreach _d,$(gapps_archive_directories), \
-		fakeroot e2mkdir $(INSTALLED_SYSTEMIMAGE_GAPPS):$(_d); \
-		fakeroot e2cp -v -P644 $(gapps_out)/system/$(_d)/* $(INSTALLED_SYSTEMIMAGE_GAPPS):$(_d); \
-	)
+	@for d in `$(gapps_directories_list)`; do \
+		fakeroot e2cp -v -P644 $(gapps_out)/system/$$d/* $(INSTALLED_SYSTEMIMAGE_GAPPS):$$d || \
+			exit 1; \
+	done
 	@rm -rf $(gapps_out)
 
 	@echo "Creating bootable android system-disk image: $@"
