@@ -246,7 +246,7 @@ $(INSTALLED_ANDROID_IMAGE_SYSTEM_W_GAPPS_TARGET): \
 	@rm -rf $(gapps_out)
 
 	@echo "Remove Provisioning apk that conflict with gapps SetupWizard"
-	e2rm $(INSTALLED_SYSTEMIMAGE_GAPPS):/system/app/Provision.apk
+	e2rm $(INSTALLED_SYSTEMIMAGE_GAPPS):/app/Provision.apk
 
 	@echo "Creating bootable android system-disk image: $@"
 	@rm -f $@
