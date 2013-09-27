@@ -25,6 +25,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(commonSources)
 LOCAL_SRC_FILES += dump_diskconfig.c
 LOCAL_MODULE := dump_diskconfig
+LOCAL_MODULE_TAGS := optional
 LOCAL_STATIC_LIBRARIES := libdiskconfig_host libcutils
 include $(BUILD_HOST_EXECUTABLE)
 
@@ -40,7 +41,7 @@ LOCAL_MODULE := libdiskconfig
 LOCAL_MODULE_TAGS := system_builder
 LOCAL_SYSTEM_SHARED_LIBRARIES := libcutils liblog libc
 
-include $(BUILD_SHARED_LIBRARY)
+#include $(BUILD_SHARED_LIBRARY)
 
 endif  # ! TARGET_SIMULATOR
 endif  # TARGET_ARCH == x86
