@@ -4,6 +4,10 @@ ifeq ($(TARGET_USE_DISKINSTALLER),true)
 
 diskinstaller_root := bootable/diskinstaller
 
+gapps_archive_file := $(GAPPS_ARCHIVE_FILE)
+gapps_out := $(PRODUCT_OUT)/gapps
+gapps_directories_list = find $(gapps_out) -mindepth 1 -type d | sed -e 's/^.*\/gapps\/system\///g'
+
 android_sysbase_modules := \
 	libc \
 	libcutils \
@@ -199,6 +203,8 @@ $(INSTALLED_DISK_INSTALLER_IMAGE_TARGET): \
 #
 
 INSTALLED_ANDROID_IMAGE_SYSTEM_TARGET := $(PRODUCT_OUT)/android_system_disk.img
+INSTALLED_ANDROID_IMAGE_SYSTEM_W_GAPPS_TARGET := $(PRODUCT_OUT)/android_system_w_gapps_disk.img
+INSTALLED_SYSTEMIMAGE_GAPPS := $(PRODUCT_OUT)/system_w_gapps.img
 android_system_layout := $(diskinstaller_root)/android_img_system_layout.conf
 
 INSTALLED_ANDROID_IMAGE_DATA_TARGET := $(PRODUCT_OUT)/android_data_disk.img
@@ -217,6 +223,39 @@ $(INSTALLED_ANDROID_IMAGE_SYSTEM_TARGET): \
 		inst_boot=$(INSTALLED_BOOTIMAGE_TARGET) \
 		inst_system=$(INSTALLED_SYSTEMIMAGE)
 	@echo "Done with bootable android system-disk image -[ $@ ]-"
+
+$(INSTALLED_ANDROID_IMAGE_SYSTEM_W_GAPPS_TARGET): \
+					$(INSTALLED_SYSTEMIMAGE) \
+					$(INSTALLED_BOOTIMAGE_TARGET) \
+					$(grub_bin) \
+					$(edit_mbr) \
+					$(android_system_layout)
+	@echo "Copy $(INSTALLED_SYSTEMIMAGE) to $(INSTALLED_SYSTEMIMAGE_GAPPS)"
+	@cp $(INSTALLED_SYSTEMIMAGE) $(INSTALLED_SYSTEMIMAGE_GAPPS)
+
+	@echo "Inflatting gapps archive: $(gapps_archive_file)"
+	@rm -rf $(gapps_out)
+	@mkdir -p $(gapps_out)
+	@tar xvz -C $(gapps_out) -f $(gapps_archive_file)
+
+	@echo "Copying gapps application to system image"
+	@for d in `$(gapps_directories_list)`; do \
+		fakeroot e2cp -v -P755 $(gapps_out)/system/$$d/* $(INSTALLED_SYSTEMIMAGE_GAPPS):$$d || \
+			exit 1; \
+	done
+	@rm -rf $(gapps_out)
+
+	@echo "Remove Provisioning apk that conflict with gapps SetupWizard"
+	e2rm $(INSTALLED_SYSTEMIMAGE_GAPPS):/app/Provision.apk
+
+	@echo "Creating bootable android system-disk image: $@"
+	@rm -f $@
+	$(hide) cat $(grub_bin) > $@
+	$(hide) $(edit_mbr) -l $(android_system_layout) -i $@ \
+		inst_boot=$(INSTALLED_BOOTIMAGE_TARGET) \
+		inst_system=$(INSTALLED_SYSTEMIMAGE_GAPPS)
+	@echo "Done with bootable android system-disk image -[ $@ ]-"
+
 
 $(INSTALLED_ANDROID_IMAGE_DATA_TARGET): \
 					$(INSTALLED_USERDATAIMAGE_TARGET) \
@@ -258,16 +297,25 @@ $(INSTALLED_VBOX_SYSTEM_DISK_IMAGE_TARGET): $(INSTALLED_ANDROID_IMAGE_SYSTEM_TAR
 	@rm -f $@
 	$(hide) $(virtual_box_manager) \
 		$(virtual_box_manager_options) \
-		$(virtual_box_manager_system_disk_ptions) \
 		$^ $@
 	@echo "Done with VirtualBox bootable system-disk image -[ $@ ]-"
+
+# We only generate gapps system vdi if the archive file exists
+ifneq ($(wildcard $(gapps_archive_file)),)
+INSTALLED_VBOX_SYSTEM_DISK_W_GAPPS_IMAGE_TARGET := $(PRODUCT_OUT)/android_system_w_gapps_disk.vdi
+$(INSTALLED_VBOX_SYSTEM_DISK_W_GAPPS_IMAGE_TARGET): $(INSTALLED_ANDROID_IMAGE_SYSTEM_W_GAPPS_TARGET)
+	@rm -f $@
+	$(hide) $(virtual_box_manager) \
+		$(virtual_box_manager_options) \
+		$^ $@
+	@echo "Done with VirtualBox bootable system-disk image -[ $@ ]-"
+endif
 
 INSTALLED_VBOX_DATA_DISK_IMAGE_TARGET := $(PRODUCT_OUT)/android_data_disk.vdi
 $(INSTALLED_VBOX_DATA_DISK_IMAGE_TARGET): $(INSTALLED_ANDROID_IMAGE_DATA_TARGET)
 	@rm -f $@
 	$(hide) $(virtual_box_manager) \
 		$(virtual_box_manager_options) \
-		$(virtual_box_manager_data_disk_ptions) \
 		$^ $@
 	@echo "Done with VirtualBox bootable data-disk image -[ $@ ]-"
 
@@ -277,10 +325,11 @@ installer_img: $(INSTALLED_DISK_INSTALLER_IMAGE_TARGET)
 .PHONY: installer_vdi
 installer_vdi: $(INSTALLED_VBOX_INSTALLER_IMAGE_TARGET)
 
-.PHONY: android_disk_vdi android_system_disk_vdi android_data_disk_vdi
+.PHONY: android_disk_vdi android_system_disk_vdi android_system_disk_w_gapps_vdi android_data_disk_vdi
 android_system_disk_vdi: $(INSTALLED_VBOX_SYSTEM_DISK_IMAGE_TARGET)
+android_system_disk_w_gapps_vdi: $(INSTALLED_VBOX_SYSTEM_DISK_W_GAPPS_IMAGE_TARGET)
 android_data_disk_vdi: $(INSTALLED_VBOX_DATA_DISK_IMAGE_TARGET)
-android_disk_vdi: android_system_disk_vdi android_data_disk_vdi
+android_disk_vdi: android_system_disk_vdi android_system_disk_w_gapps_vdi android_data_disk_vdi
 
 
 else  # ! TARGET_USE_DISKINSTALLER
